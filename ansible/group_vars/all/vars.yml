@@ -1,0 +1,15 @@
+# Variable for the PostgreSQL configuration
+postgres_version: "12"
+
+# Variables for the CTFd configuration
+ctfd_db_user: ctfd
+ctfd_db_password: ctfd
+ctfd_db_host: 192.168.56.11
+ctfd_redis_host: 192.168.56.10
+database: PostgreSQL
+
+# Variables for the Nginx configuration
+ctfd_host: 192.168.56.12
+ctfd_port: 8000
+nginx_listen_port: 80
+#host_port: 8080

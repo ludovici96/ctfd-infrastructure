@@ -1,0 +1,27 @@
+---
+# tasks file for roles/redis
+
+- name: Install Redis Server
+  ansible.builtin.apt:
+    name: redis-server
+    state: latest
+    update_cache: yes
+  become: true
+
+- name: Update Redis Configuration to bind to the correct interface
+  ansible.builtin.lineinfile:
+    path: /etc/redis/redis.conf
+    regexp: '^bind 127.0.0.1 ::1'
+    line: 'bind 192.168.56.10'
+    state: present
+  notify:
+    - restart redis
+  become: true
+
+- name: Ensure Redis is running and enabled on boot
+  ansible.builtin.service:
+    name: redis-server
+    state: started
+    enabled: yes
+  become: true
+

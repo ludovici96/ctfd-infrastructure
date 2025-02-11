@@ -1,0 +1,39 @@
+---
+# tasks file for roles/nginx
+
+- name: Install Nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Remove default Nginx configuration
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  become: true
+
+- name: Upload custom Nginx configuration for CTFd
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/sites-available/ctfd.conf
+  notify:
+    - reload nginx
+  become: true
+
+- name: Enable CTFd Nginx configuration
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/ctfd.conf
+    dest: /etc/nginx/sites-enabled/ctfd.conf
+    state: link
+  notify:
+    - reload nginx
+  become: true
+
+- name: Ensure Nginx is running and enabled
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true
+  become: true

@@ -1,0 +1,72 @@
+---
+# tasks file for roles/postgresql
+
+- name: Update cache and install Python and PostgreSQL dependencies
+  apt:
+    name:
+      - python3-psycopg2
+      - libpq-dev
+      - python3-pip
+      - postgresql
+    update_cache: yes
+    state: present
+  become: true
+
+- name: Install psycopg2 via pip
+  pip:
+    name: psycopg2
+    state: present
+  become: true
+
+- name: Configure PostgreSQL
+  block:
+    - name: Configure PostgreSQL to use md5 authentication for local connections
+      lineinfile:
+        path: "/etc/postgresql/{{ postgres_version }}/main/pg_hba.conf"
+        regexp: '^local\s+all\s+all\s+peer$'
+        line: 'local   all             all                                     md5'
+        state: present
+
+    - name: Allow connections from the CTFd server
+      lineinfile:
+        path: "/etc/postgresql/{{ postgres_version }}/main/pg_hba.conf"
+        line: 'host    all             all             192.168.56.0/21         md5'
+        state: present
+
+    - name: Ensure PostgreSQL listens on all network interfaces
+      lineinfile:
+        path: "/etc/postgresql/{{ postgres_version }}/main/postgresql.conf"
+        regexp: '^#listen_addresses = .+$'
+        line: "listen_addresses = '*'"
+        state: present
+  become: true
+  notify: restart postgresql
+
+- name: Ensure PostgreSQL is running and enabled on boot
+  service:
+    name: postgresql
+    state: started
+    enabled: yes
+  become: true
+
+- name: Create CTFd database and user
+  block:
+    - name: Create CTFd database for PostgreSQL
+      postgresql_db:
+        name: ctfd
+        state: present
+
+    - name: Create CTFd user for PostgreSQL
+      postgresql_user:
+        name: ctfd
+        password: ctfd # can use Ansible Vault in production to encrypt this, if we want.
+        state: present
+
+    - name: Grant privileges to CTFd user on CTFd database
+      postgresql_privs:
+        db: ctfd
+        role: ctfd
+        objs: ALL_IN_SCHEMA
+        privs: ALL
+  become: true
+  become_user: postgres

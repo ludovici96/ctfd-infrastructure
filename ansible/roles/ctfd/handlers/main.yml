@@ -1,0 +1,13 @@
+---
+# handlers file for roles/ctfd
+
+- name: reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  become: true
+
+- name: restart ctfd
+  ansible.builtin.systemd:
+    name: ctfd
+    state: restarted
+  become: true

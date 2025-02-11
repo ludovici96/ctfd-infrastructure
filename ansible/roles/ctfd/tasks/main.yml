@@ -1,0 +1,69 @@
+---
+# tasks file for roles/ctfd
+
+- name: Install CTFd dependencies and system packages
+  ansible.builtin.apt:
+    name:
+      - git
+      - python3-pip
+      - python3-dev
+      - build-essential
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Remove old versions of OpenSSL if exists
+  ansible.builtin.file:
+    path: /usr/lib/python3/dist-packages/OpenSSL
+    state: absent
+  ignore_errors: true
+  become: true
+
+- name: Upgrade pip, setuptools, wheel, pyopenssl, and psycopg2-binary
+  ansible.builtin.pip:
+    name: "{{ item }}"
+    state: latest
+  loop:
+    - pip
+    - setuptools
+    - wheel
+    - pyopenssl
+    - psycopg2-binary
+  become: true
+
+- name: Ensure CTFd repo is cloned to /opt/CTFd
+  ansible.builtin.git:
+    repo: 'https://github.com/CTFd/CTFd.git'
+    dest: /opt/CTFd
+    version: master # Consider pinning to a specific tag or commit for production use
+    update: yes     # This will only pull changes if the version has changed
+  become: true
+
+- name: Install Python packages for CTFd
+  ansible.builtin.pip:
+    chdir: /opt/CTFd
+    requirements: /opt/CTFd/requirements.txt
+    executable: pip3
+  become: true
+
+- name: Configure CTFd environment settings
+  ansible.builtin.template:
+    src: env.j2
+    dest: /opt/CTFd/.env
+    mode: '0600'
+  become: true
+
+- name: Set up CTFd systemd service
+  ansible.builtin.template:
+    src: ctfd.service.j2
+    dest: /etc/systemd/system/ctfd.service
+  notify:
+    - reload systemd
+  become: true
+
+- name: Ensure CTFd service is enabled and started
+  ansible.builtin.systemd:
+    name: ctfd
+    enabled: true
+    state: started
+  become: true

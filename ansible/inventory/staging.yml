@@ -1,0 +1,15 @@
+---
+all:
+  children:
+    redis:
+      hosts:
+        192.168.56.10:
+    db:
+      hosts:
+        192.168.56.11:
+    ctfd:
+      hosts:
+        192.168.56.12:
+    nginx:
+      hosts:
+        192.168.56.13:

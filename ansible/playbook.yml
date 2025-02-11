@@ -1,0 +1,26 @@
+---
+- hosts: all
+  become: true
+  roles:
+    - common
+
+- hosts: redis
+  become: true
+  roles:
+    - redis
+    
+- hosts: db
+  become: true
+  roles:
+    - postgresql
+
+- hosts: ctfd
+  become: true
+  roles:
+    - ctfd
+
+- hosts: nginx
+  become: true
+  roles:
+    - nginx
+
